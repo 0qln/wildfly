@@ -3,7 +3,7 @@
 
   inputs = {
     flake-parts.url = "github:hercules-ci/flake-parts";
-    nixpkgs.url = "github:NixOS/nixpkgs/9da7f1cf7f8a6e2a7cb3001b048546c92a8258b4";
+    nixpkgs.url = "github:NixOS/nixpkgs";
   };
 
   outputs = inputs @ {flake-parts, ...}:
@@ -26,16 +26,18 @@
           name = "wildfly-fhs";
           targetPkgs = pkgs: with pkgs; [openjdk21 bash coreutils];
           runScript = "${wildfly}/bin/standalone.sh";
-          profile = ''
-            export WILDFLY_BASE_DIR="$HOME/.wildfly-fhs-base"
-            mkdir -p "$WILDFLY_BASE_DIR"/{log,data,deployments,tmp,configuration}
-            if [ ! -f "$WILDFLY_BASE_DIR/configuration/standalone.xml" ]; then
-              cp -r ${wildfly}/standalone/configuration/* "$WILDFLY_BASE_DIR/configuration/"
-              chmod -R u+w "$WILDFLY_BASE_DIR/configuration/"
-            fi
-            export JBOSS_HOME=${wildfly}
-            export JBOSS_BASE_DIR="$WILDFLY_BASE_DIR"
-          '';
+          profile =
+            # bash
+            ''
+              export WILDFLY_BASE_DIR="''${WILDFLY_BASE_DIR:-$HOME/.wildfly-fhs-base}"
+              mkdir -p "$WILDFLY_BASE_DIR"/{log,data,deployments,tmp,configuration}
+              if [ ! -f "$WILDFLY_BASE_DIR/configuration/standalone.xml" ]; then
+                cp -r ${wildfly}/standalone/configuration/* "$WILDFLY_BASE_DIR/configuration/"
+                chmod -R u+w "$WILDFLY_BASE_DIR/configuration/"
+              fi
+              export JBOSS_HOME=${wildfly}
+              export JBOSS_BASE_DIR="$WILDFLY_BASE_DIR"
+            '';
         };
       in {
         packages = {
